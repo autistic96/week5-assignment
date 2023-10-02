@@ -1,0 +1,75 @@
+---
+title: "Week 5 Assignment"
+author: "Kelly Eng"
+date: "2023-10-01"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+dplyr and tidyr are part of tidyverse
+```{r load-tidyverse}
+library(tidyverse)
+```
+Get the untidy airlines data
+```{r untidy-data}
+untidy_data <- read.csv("flights.csv")
+head(untidy_data)
+#Rename the columns
+names(untidy_data) <- c("Airline", "Departure", "Los Angeles", "Phoenix", "San Diego", "San Francisco", "Seattle")
+head(untidy_data)
+```
+
+Tidy it up
+```{r tidying}
+# Apologies for doing this. RStudio would work correctly but suddenly decides it doesn't know how to count. It gave the result TRUE TRUE TRUE TRUE TRUE for nchar(untidy_data$Airline) > 0
+# nchar(untidy$Airline) also gave the incorrect result of 6 6 6 6 6 
+untidy_data$Airline[2] = untidy_data$Airline[1]
+untidy_data$Airline[5] = untidy_data$Airline[4]
+
+airlines <- untidy_data |>
+  pivot_longer(`Los Angeles`:`Seattle`, names_to = "Destination", values_to = "Times", values_drop_na = TRUE)
+
+str(airlines)
+head(airlines)
+```
+
+Comparing Arrival Delays
+```{r analysis}
+
+#Delayed Flights
+## AM West have more delayed flights on average along with having a higher median of delayed flights
+airlines |> 
+  group_by(Airline) |>
+  filter(Departure == "delayed") |>
+  summarize(average = mean(Times), median = median(Times), standard_deviation = sd(Times))
+
+delayed_flights <- airlines |>
+  filter(Departure == "delayed")
+ggplot(delayed_flights, aes(x = Airline, y = Times)) + geom_point(aes(color = Destination))
+
+# On Time Flights
+## AM West also have a higher average of being on time for flights than Alaska Airlines, it have a lower median though
+airlines |> 
+  group_by(Airline) |>
+  filter(Departure == "on time") |>
+  summarize(average = mean(Times), median = median(Times), standard_deviation = sd(Times))
+
+ontime_flights <- airlines |>
+  filter(Departure == "on time")
+ggplot(ontime_flights, aes(x = Airline, y = Times)) + geom_point(aes(color = Destination))
+
+# Delayed Flights be Destination
+airlines |> 
+  group_by(Destination) |>
+  filter(Departure == "delayed") |>
+  summarize(average = mean(Times), median = median(Times))
+
+# On Time Flights be Destination
+airlines |> 
+  group_by(Destination) |>
+  filter(Departure == "on time") |>
+  summarize(average = mean(Times), median = median(Times))
+```
